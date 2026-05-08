@@ -54,12 +54,9 @@ def findsegments(md, *args):  # {{{
             # Find the common vertices to the two elements connected to 'el1' (1 or 2)
             flag = intersect(md.mesh.elements[els2[0] - 1, :], md.mesh.elements[els2[1] - 1, :])[0] # NOTE: Throwing away second- and third- position values returned from call
 
-            # Get the vertices on the boundary and build segment
-            if hasattr(np, 'isin'): #Numpy 2017+
-                tmp = np.isin(nods1, flag, assume_unique=True)
-            else: #For backward compatibility
-                tmp = np.in1d(nods1, flag, assume_unique=True)
-            nods1 = np.delete(nods1, np.where())
+            # Drop the two vertices shared with the neighbor elements; keep
+            # the boundary edge. (MATLAB: nods1(ismember(nods1,flag)) = [])
+            nods1 = nods1[~np.isin(nods1, flag, assume_unique=True)]
             segments[count, :] = np.append(nods1, el1 + 1)
 
             # Swap segment nodes if necessary
@@ -77,8 +74,9 @@ def findsegments(md, *args):  # {{{
         else:
             # NOTE: This block is untested as it does not get touched by test2004 (remove this note once it has been tested)
 
-            # Find the vertex that 'el1' does not share with 'els2'
-            flag = np.setdiff1d(nods, md.mesh.elements[els2, :])
+            # Find the vertex that 'el1' does not share with 'els2'.
+            # els2 holds 1-based ids; subtract 1 to index 0-based.
+            flag = np.setdiff1d(nods1, md.mesh.elements[els2 - 1, :])
 
             for j in range(3):
                 nods = nods1
