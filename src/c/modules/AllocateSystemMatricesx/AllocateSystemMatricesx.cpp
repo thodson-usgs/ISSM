@@ -54,7 +54,7 @@ void AllocateSystemMatricesx(Matrix<IssmDouble>** pKff,Matrix<IssmDouble>** pKfs
 			}
 			else{
 				MatrixNonzeros(&d_nnz,&o_nnz,femmodel,FsetEnum,FsetEnum);
-				Kff=new Matrix<IssmDouble>(m,n,M,N,d_nnz,o_nnz);
+				Kff=new Matrix<IssmDouble>(m,n,M,N,d_nnz,o_nnz,numberofdofspernode);
 				xDelete<int>(d_nnz);
 				xDelete<int>(o_nnz);
 			}
@@ -67,7 +67,7 @@ void AllocateSystemMatricesx(Matrix<IssmDouble>** pKff,Matrix<IssmDouble>** pKfs
 			}
 			else{
 				MatrixNonzeros(&d_nnz,&o_nnz,femmodel,FsetEnum,SsetEnum);
-				Kfs=new Matrix<IssmDouble>(m,n,M,N,d_nnz,o_nnz);
+				Kfs=new Matrix<IssmDouble>(m,n,M,N,d_nnz,o_nnz,numberofdofspernode);
 				xDelete<int>(d_nnz);
 				xDelete<int>(o_nnz);
 			}

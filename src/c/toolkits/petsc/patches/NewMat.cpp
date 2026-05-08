@@ -106,6 +106,8 @@ PMat NewMat(int M,int N,int connectivity,int numberofdofspernode,ISSM_MPI_Comm c
 
 	MatCreate(comm,&outmatrix);
 	MatSetSizes(outmatrix,m,n,M,N);
+	/* Must precede MatSetFromOptions/preallocation; required for BAIJ/SBAIJ correctness. */
+	if(numberofdofspernode>1) MatSetBlockSize(outmatrix,numberofdofspernode);
 	MatSetFromOptions(outmatrix);
 	MatSetOption(outmatrix,MAT_IGNORE_ZERO_ENTRIES,PETSC_TRUE);
 

@@ -36,10 +36,12 @@ PetscMat<doubletype>::PetscMat(int M,int N, IssmPDouble sparsity){/*{{{*/
 }
 /*}}}*/
 template<typename doubletype>
-PetscMat<doubletype>::PetscMat(int m,int n,int M,int N,int* d_nnz,int* o_nnz){/*{{{*/
+PetscMat<doubletype>::PetscMat(int m,int n,int M,int N,int* d_nnz,int* o_nnz,int block_size){/*{{{*/
 
 	MatCreate(IssmComm::GetComm(),&this->matrix);
 	MatSetSizes(this->matrix,m,n,M,N);
+	/* Must precede MatSetFromOptions/preallocation; required for BAIJ/SBAIJ correctness. */
+	if(block_size>1) MatSetBlockSize(this->matrix,block_size);
 	MatSetFromOptions(this->matrix);
 
 	/* 

@@ -54,13 +54,13 @@ class Matrix{
 
 		}
 		/*}}}*/
-		Matrix(int m,int n,int M,int N,int* d_nnz,int* o_nnz){/*{{{*/
+		Matrix(int m,int n,int M,int N,int* d_nnz,int* o_nnz,int block_size=1){/*{{{*/
 
 			InitCheckAndSetType();
 
 			if(type==PetscMatType){
 				#ifdef _HAVE_PETSC_
-				this->pmatrix=new PetscMat<doubletype>(m,n,M,N,d_nnz,o_nnz);
+				this->pmatrix=new PetscMat<doubletype>(m,n,M,N,d_nnz,o_nnz,block_size);
 				#endif
 			}
 			else{
