@@ -21,26 +21,24 @@ def squaremesh(md, Lx, Ly, nx, ny):
     nel = (nx - 1) * (ny - 1) * 2
     nods = nx * ny
 
-    #initialization
-    index = np.zeros((nel, 3), int)
-    x = np.zeros((nx * ny, ))
-    y = np.zeros((nx * ny, ))
-
     #create coordinates
-    for n in range(0, nx):
-        for m in range(0, ny):
-            x[n * ny + m] = float(n)
-            y[n * ny + m] = float(m)
+    n_grid, m_grid = np.meshgrid(np.arange(nx, dtype=np.float64),
+                                 np.arange(ny, dtype=np.float64),
+                                 indexing='ij')
+    x = n_grid.ravel()
+    y = m_grid.ravel()
 
-    #create index
-    for n in range(0, nx - 1):
-        for m in range(0, ny - 1):
-            A = n * ny + (m + 1)
-            B = A + 1
-            C = (n + 1) * ny + (m + 1)
-            D = C + 1
-            index[n * (ny - 1) * 2 + 2 * m, :] = [A, C, B]
-            index[n * (ny - 1) * 2 + 2 * (m + 1) - 1, :] = [B, C, D]
+    #create index — two triangles per cell, interleaved as
+    # [A C B] at row 2m, [B C D] at row 2m+1, for each column n
+    n_idx, m_idx = np.meshgrid(np.arange(nx - 1), np.arange(ny - 1),
+                               indexing='ij')
+    A = n_idx * ny + (m_idx + 1)
+    B = A + 1
+    C = (n_idx + 1) * ny + (m_idx + 1)
+    D = C + 1
+    index = np.empty((nel, 3), dtype=int)
+    index[0::2, :] = np.stack([A, C, B], axis=-1).reshape(-1, 3)
+    index[1::2, :] = np.stack([B, C, D], axis=-1).reshape(-1, 3)
 
     #Scale  x and y
     x = x / np.max(x) * Lx
