@@ -89,7 +89,10 @@ def contourenvelope(mh, *args):
     # First: find elements on the boundary of the domain
     flag = copy.deepcopy(elementconnectivity)
     if len(args) == 1:
-        flag[np.nonzero(flag)] = elemin[flag[np.nonzero(flag)]]
+        # elementconnectivity stores 1-based element ids (0 = no neighbor);
+        # subtract 1 to index elemin (0-based).
+        nz = np.nonzero(flag)
+        flag[nz] = elemin[flag[nz] - 1]
     elementonboundary = np.logical_and(np.prod(flag, axis=1) == 0, np.sum(flag, axis=1) > 0)
 
     # Find segments on boundary
