@@ -33,7 +33,7 @@ def marshall(md, filename):
 
         # Marshall current object
         #print('marshalling {} ...'.format(field) # Uncomment for debugging
-        exec('md.{}.marshall(\'md.{}\', md, fid)'.format(field, field))
+        getattr(md, field).marshall('md.' + field, md, fid)
 
     #Last, write "md.EOF" to make sure that the binary file is not corrupt
     WriteData(fid, 'XXX', 'name', 'md.EOF', 'data', True, 'format', 'Boolean')
