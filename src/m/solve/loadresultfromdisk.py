@@ -25,7 +25,7 @@ def loadresultfromdisk(filename, step, name, *args):  # {{{
 
     while True:
         # read field
-        fpos = tell(fid)
+        fpos = fid.tell()
         length = struct.unpack('i', fid.read(struct.calcsize('i')))[0]
 
         fieldname = struct.unpack('{}s'.format(length), fid.read(length))[0][:-1]
