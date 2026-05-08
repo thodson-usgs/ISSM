@@ -16,8 +16,6 @@ def GetAreas3DTria(index, x, y, z, *args):
     - Determine if *args is needed.
     """
 
-    # Get number of elements and number of nodes
-    nels = index.shape[0]
     nods = len(x)
 
     # Some checks
@@ -40,23 +38,10 @@ def GetAreas3DTria(index, x, y, z, *args):
         print(GetAreas3DTria.__doc__)
         raise Exception('GetAreas3DTria error message: index should have 3 columns for 2d meshes')
 
-    # Initialization
-    areas = np.zeros((nels, ))
-    x1 = x[index[:, 0] - 1]
-    x2 = x[index[:, 1] - 1]
-    x3 = x[index[:, 2] - 1]
-    y1 = y[index[:, 0] - 1]
-    y2 = y[index[:, 1] - 1]
-    y3 = y[index[:, 2] - 1]
-    z1 = z[index[:, 0] - 1]
-    z2 = z[index[:, 1] - 1]
-    z3 = z[index[:, 2] - 1]
+    # Vertex coordinates per triangle (1-based ids -> 0-based indices)
+    p1 = np.column_stack((x[index[:, 0] - 1], y[index[:, 0] - 1], z[index[:, 0] - 1]))
+    p2 = np.column_stack((x[index[:, 1] - 1], y[index[:, 1] - 1], z[index[:, 1] - 1]))
+    p3 = np.column_stack((x[index[:, 2] - 1], y[index[:, 2] - 1], z[index[:, 2] - 1]))
 
-    # Area of triangles with 3D coordinates
-    for i in range(nels):
-        m1 = np.vstack(([x1[i], x2[i], x3[i]], [y1[i], y2[i], y3[i]], [1, 1, 1]))
-        m2 = np.vstack(([y1[i], y2[i], y3[i]], [z1[i], z2[i], z3[i]], [1, 1, 1]))
-        m3 = np.vstack(([z1[i], z2[i], z3[i]], [x1[i], x2[i], x3[i]], [1, 1, 1]))
-        areas[i] = ((np.linalg.det(m1) ** 2 + np.linalg.det(m2) ** 2 + np.linalg.det(m3) ** 2) ** 0.5) / 2 # NOTE: math.sqrt cannot be applied element-wise to a list/numpy.array
-
-    return areas
+    # Area = 0.5 * |edge1 × edge2|
+    return 0.5 * np.linalg.norm(np.cross(p2 - p1, p3 - p1), axis=1)
