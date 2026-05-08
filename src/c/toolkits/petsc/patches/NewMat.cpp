@@ -115,6 +115,10 @@ PMat NewMat(int M,int N,int connectivity,int numberofdofspernode,ISSM_MPI_Comm c
 	if((strcmp(type,"mpiaij")==0) || (strcmp(type,"mpidense")==0)){
 		MatMPIAIJSetPreallocation(outmatrix,d_nz,NULL,o_nz,NULL);
 	}
+	else if((strcmp(type,"seqaij")==0) || (strcmp(type,"seqdense")==0)){
+		/* Sequential matrices: total nnz per row, no diagonal/off-diagonal split. */
+		MatSeqAIJSetPreallocation(outmatrix,d_nz+o_nz,NULL);
+	}
 
 	return outmatrix;
 }

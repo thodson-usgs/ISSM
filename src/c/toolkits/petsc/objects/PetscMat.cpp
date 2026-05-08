@@ -42,28 +42,17 @@ PetscMat<doubletype>::PetscMat(int m,int n,int M,int N,int* d_nnz,int* o_nnz){/*
 	MatSetSizes(this->matrix,m,n,M,N);
 	MatSetFromOptions(this->matrix);
 
-	/* 
-	 * Versions of Petsc beyond 3.3 have changed the use of preallocation 
-	 * routines to distinguish between parallel builds and sequential. Since
-	 * our Windows builds are currently only sequential, we need to change
-	 * the way we use these functions.
-	 *
-	 * The following code computes the total number of non-zeroes per row of the
-	 * matrix in question. In parallel builds it is nescessary to kep track of 
-	 * diagonal non zeros and off-diagonal (d_nnz and o_nnz). Sequential does
-	 * not make that distinction.
-	*/
-	#ifdef _HAVE_PETSC_MPI_
-		int* nnz = new int[M];
-		for(int i = 0; i < M; i++)
-			nnz[i] = o_nnz[i] + d_nnz[i];
+	/* The runtime matrix type depends on the comm size, not on whether MPI is
+	 * enabled at compile time — call both preallocation routines and let
+	 * PETSc no-op the one that doesn't apply. SeqAIJ takes total nnz per row;
+	 * MPIAIJ keeps the diagonal/off-diagonal split. */
+	int* nnz = xNew<int>(M);
+	for(int i=0;i<M;i++) nnz[i] = d_nnz[i] + o_nnz[i];
 
-		PetscErrorCode ierr = MatSeqAIJSetPreallocation(this->matrix,0,nnz);
-		delete[] nnz;
-	#else
-		PetscErrorCode ierr = MatMPIAIJSetPreallocation(this->matrix,0,d_nnz,0,o_nnz);
-	#endif
-	if(ierr) _error_("PETSc could not allocate matrix (probably not enough memory)");
+	PetscErrorCode ierr_seq = MatSeqAIJSetPreallocation(this->matrix,0,nnz);
+	PetscErrorCode ierr_mpi = MatMPIAIJSetPreallocation(this->matrix,0,d_nnz,0,o_nnz);
+	xDelete<int>(nnz);
+	if(ierr_seq || ierr_mpi) _error_("PETSc could not allocate matrix (probably not enough memory)");
 //	MatSetOption(this->matrix,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE);
 
 }
