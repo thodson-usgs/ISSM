@@ -38,7 +38,7 @@ class PetscMat{
 		PetscMat();
 		PetscMat(int M,int N);
 		PetscMat(int M,int N,IssmPDouble sparsity);
-		PetscMat(int m,int n,int M,int N,int* d_nnz,int* o_nnz);
+		PetscMat(int m,int n,int M,int N,int* d_nnz,int* o_nnz,int block_size=1);
 		PetscMat(doubletype* serial_mat,int M,int N,IssmPDouble sparsity);
 		PetscMat(int M,int N,int connectivity,int numberofdofspernode);
 		~PetscMat();
