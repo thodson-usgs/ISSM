@@ -35,13 +35,10 @@ def nearestneighbors(x, y, data, goodids, badids, knn):
     tree = cKDTree(XYGood)
     nearest = tree.query(XYBad, k=knn)[1]
 
+    goodvals = filled[goodids]
     if knn == 1:
-        filled[badids] = filled[goodids][nearest]  # can add k = N to return the N nearest neighbors
+        filled[badids] = goodvals[nearest]
     else:
-        for i in range(len(badids)):
-            neardat = []
-            for j in range(knn):
-                neardat.append(filled[goodids][nearest[i][j]])
-                filled[badids[i]] = np.mean(neardat)
+        filled[badids] = goodvals[nearest].mean(axis=1)
 
     return filled
