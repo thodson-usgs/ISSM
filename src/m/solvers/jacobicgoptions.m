@@ -13,4 +13,4 @@ jacobicg.toolkit='petsc';
 jacobicg.mat_type=getfieldvalue(options,'mat_type','mpiaij');
 jacobicg.ksp_type=getfieldvalue(options,'ksp_type','cg');
 jacobicg.ksp_max_it=getfieldvalue(options,'ksp_max_it',100);
-jacobicg.ksp_rtol=getfieldvalue(options,'ksp_rtol',1e-15);
+jacobicg.ksp_rtol=getfieldvalue(options,'ksp_rtol',1e-8);

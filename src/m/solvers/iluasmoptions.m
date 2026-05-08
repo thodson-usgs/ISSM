@@ -14,4 +14,4 @@ iluasm.pc_type=getfieldvalue(options,'pc_type','asm');
 iluasm.sub_pc_type=getfieldvalue(options,'sub_pc_type','ilu');
 iluasm.pc_asm_overlap=getfieldvalue(options,'pc_asm_overlap',5);
 iluasm.ksp_max_it=getfieldvalue(options,'ksp_max_it',100);
-iluasm.ksp_rtol=getfieldvalue(options,'ksp_rtol',1e-15);
+iluasm.ksp_rtol=getfieldvalue(options,'ksp_rtol',1e-8);

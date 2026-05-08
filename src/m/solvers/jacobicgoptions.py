@@ -14,7 +14,7 @@ def jacobicgoptions(*args):
                ['mat_type', 'mpiaij'],
                ['ksp_type', 'cg'],
                ['ksp_max_it', 100],
-               ['ksp_rtol', 1e-15]]
+               ['ksp_rtol', 1e-8]]
 
     #now, go through our arguments, and write over default options.
     for i in range(len(arguments.list)):
