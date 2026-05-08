@@ -166,12 +166,10 @@ def WriteData(fid, prefix, *args):
             fid.write(pack('i', s[1]))
         except IndexError:
             fid.write(pack('i', 1))
-        for i in range(s[0]):
-            if np.ndim(data) == 1:
-                fid.write(pack('d', float(data[i])))
-            else:
-                for j in range(s[1]):
-                    fid.write(pack('d', float(data[i][j])))
+        if np.prod(s) > 0:
+            # IntMat/BooleanMat bodies are stored as float64 to match the C++
+            # reader (IssmPDouble fread).
+            fid.write(np.ascontiguousarray(data, dtype=np.float64).tobytes())
     # }}}
 
     elif datatype == 'DoubleMat':  # {{{
@@ -208,12 +206,8 @@ def WriteData(fid, prefix, *args):
             fid.write(pack('i', s[1]))
         except IndexError:
             fid.write(pack('i', 1))
-        for i in range(s[0]):
-            if np.ndim(data) == 1:
-                fid.write(pack('d', float(data[i]))) # get to the "c" convention, hence the transpose
-            else:
-                for j in range(s[1]):
-                    fid.write(pack('d', float(data[i][j]))) # get to the "c" convention, hence the transpose
+        if np.prod(s) > 0:
+            fid.write(np.ascontiguousarray(data, dtype=np.float64).tobytes())
     # }}}
 
     elif datatype == 'CompressedMat':  # {{{
@@ -270,16 +264,13 @@ def WriteData(fid, prefix, *args):
         fid.write(pack('d', float(rangeA)))
 
         if np.ndim(data) == 1:
-            for i in range(s[0] - 1):
-                fid.write(pack('B', int(A[i])))
+            if s[0] - 1 > 0:
+                fid.write(np.ascontiguousarray(A, dtype=np.uint8).tobytes())
             fid.write(pack('d', float(data[s[0] - 1]))) # get to the "c" convention, hence the transpose
         elif np.prod(s) > 0:
-            for i in range(s[0] - 1):
-                for j in range(s[1]):
-                    fid.write(pack('B', int(A[i][j]))) # get to the "c" convention, hence the transpose
-
-            for j in range(s[1]):
-                fid.write(pack('d', float(data[s[0] - 1][j])))
+            # (s[0]-1) x n2 uint8 body followed by the last row as doubles.
+            fid.write(np.ascontiguousarray(A, dtype=np.uint8).tobytes())
+            fid.write(np.ascontiguousarray(data[s[0] - 1, :], dtype=np.float64).tobytes())
 
     # }}}
 
@@ -324,12 +315,8 @@ def WriteData(fid, prefix, *args):
                 fid.write(pack('i', s[1]))
             except IndexError:
                 fid.write(pack('i', 1))
-            for i in range(s[0]):
-                if np.ndim(matrix) == 1:
-                    fid.write(pack('d', float(matrix[i]))) # get to the "c" convention, hence the transpose
-                else:
-                    for j in range(s[1]):
-                        fid.write(pack('d', float(matrix[i][j])))
+            if np.prod(s) > 0:
+                fid.write(np.ascontiguousarray(matrix, dtype=np.float64).tobytes())
     # }}}
 
     elif datatype == 'StringArray':  # {{{
