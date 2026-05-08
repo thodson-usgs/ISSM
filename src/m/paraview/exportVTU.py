@@ -112,8 +112,12 @@ def exportVTU(filename, md, *args, enveloppe=False, fmtout="binary", **kwargs):
             mesh_alti = '0'
             is_enveloppe = np.logical_or(md.mesh.vertexonbase, md.mesh.vertexonsurface)
             enveloppe_index = np.where(is_enveloppe)[0]
-            convert_index = np.nan * np.ones(np.shape(md.mesh.x))
-            convert_index = np.asarray([[i, np.where(enveloppe_index == i)[0][0]] for i, val in enumerate(convert_index) if any(enveloppe_index == i)])
+            # Build a dense lookup table for old-vertex-id -> new-envelope-id.
+            # The previous list-comprehension form was O(N_total * N_envelope)
+            # because of `any(enveloppe_index == i)` per vertex, which made
+            # exportVTU effectively unusable on multi-million-vertex meshes.
+            lut = np.full(np.shape(md.mesh.x)[0], -1, dtype=np.int64)
+            lut[enveloppe_index] = np.arange(len(enveloppe_index))
 
             num_of_points = np.size(enveloppe_index)
             points = np.column_stack((md.mesh.x[enveloppe_index],
@@ -122,10 +126,7 @@ def exportVTU(filename, md, *args, enveloppe=False, fmtout="binary", **kwargs):
 
             num_of_elt = np.size(np.where(np.isnan(md.mesh.lowerelements))) + np.size(np.where(np.isnan(md.mesh.upperelements)))
             connect = md.mesh.elements[np.where(is_enveloppe[md.mesh.elements - 1])].reshape(int(num_of_elt), 3) - 1
-            for elt in range(0, num_of_elt):
-                connect[elt, 0] = convert_index[np.where(convert_index == connect[elt, 0])[0], 1][0]
-                connect[elt, 1] = convert_index[np.where(convert_index == connect[elt, 1])[0], 1][0]
-                connect[elt, 2] = convert_index[np.where(convert_index == connect[elt, 2])[0], 1][0]
+            connect = lut[connect]
 
             num_of_edges = every_edges  #looks like edges is only defined on the 2d mesh
             if num_of_edges > 0:
@@ -189,68 +190,30 @@ def exportVTU(filename, md, *args, enveloppe=False, fmtout="binary", **kwargs):
                 raise ClipError('Your Y boundaries [{}, {}] are outside of the model domain [{},{}]'.format(Ymin, Ymax, np.nanmin(points[:, 1]), np.nanmax(points[:, 1])))
 
             #boundaries should be fine lets do stuff
-            InX = np.where(np.logical_and(points[:, 0] >= Xmin, points[:, 0] <= Xmax))
-            InY = np.where(np.logical_and(points[:, 1] >= Ymin, points[:, 1] <= Ymax))
-
-            Isinside = np.zeros(np.shape(points)[0], dtype=bool)
-            clip_convert_index = np.nan * np.ones(np.shape(points)[0])
+            n_pre_clip = np.shape(points)[0]
+            in_clip = (points[:, 0] >= Xmin) & (points[:, 0] <= Xmax) & \
+                      (points[:, 1] >= Ymin) & (points[:, 1] <= Ymax)
 
             #define the vertices that are within clipping window
-            Inclipping = np.intersect1d(InX, InY)
-            Isinside[Inclipping] = True
+            Inclipping = np.where(in_clip)[0]
             points = points[Inclipping, :]
             num_of_points = np.shape(points)[0]
 
-            #go thorough the elements and keep those for which one node is in the clipped arrea
-            clipconnect = np.asarray([], dtype=int)
-            for elt in connect:
-                if set(elt).issubset(Inclipping):
-                    clipconnect = np.append(clipconnect, elt, axis=0)
+            # Dense LUT replaces the per-element `np.where(Inclipping==id)`
+            # patterns and the `np.append`-in-loop O(N^2) builds. Keep elements
+            # whose every vertex is inside the clip; reindex with the LUT.
+            clip_lut = np.full(n_pre_clip, -1, dtype=np.int64)
+            clip_lut[Inclipping] = np.arange(num_of_points)
 
-            #reshape
-            num_of_elt = int(np.size(clipconnect) / 3)
-            connect = clipconnect.reshape(num_of_elt, 3)
-
-            clip_convert_index = np.asarray([[i, np.where(Inclipping == i)[0][0]] for i, val in enumerate(clip_convert_index) if any(Inclipping == i)])
-            enveloppe_index = enveloppe_index[clip_convert_index[:, 0]]
-
-            #convert indexing and exclude elements that are partly outside of the region
-            for elt in range(0, num_of_elt):
-                try:
-                    connect[elt, 0] = clip_convert_index[np.where(clip_convert_index == connect[elt, 0])[0], 1][0]
-                except IndexError:
-                    connect[elt, 0] = -1
-                try:
-                    connect[elt, 1] = clip_convert_index[np.where(clip_convert_index == connect[elt, 1])[0], 1][0]
-                except IndexError:
-                    connect[elt, 1] = -1
-                try:
-                    connect[elt, 2] = clip_convert_index[np.where(clip_convert_index == connect[elt, 2])[0], 1][0]
-                except IndexError:
-                    connect[elt, 2] = -1
-
-            connect = connect[np.where(connect != -1)[0], :]
+            keep_elt = np.all(in_clip[connect], axis=1)
+            connect = clip_lut[connect[keep_elt]]
             num_of_elt = np.shape(connect)[0]
 
+            enveloppe_index = enveloppe_index[Inclipping]
+
             if num_of_edges > 0:
-                clipedges = np.asarray([], dtype=int)
-                for edge in edges:
-                    if set(edge).issubset(Inclipping):
-                        clipedges = np.append(clipedges, edge, axis=0)
-
-                num_of_edges = int(np.size(clipedges) / 2)
-                edges = clipedges.reshape(num_of_edges, 2)
-
-                for edge in range(0, num_of_edges):
-                    try:
-                        edges[edge, 0] = clip_convert_index[np.where(clip_convert_index == edges[edge, 0])[0], 1][0]
-                    except IndexError:
-                        edges[edge, 0] = -1
-                    try:
-                        edges[edge, 1] = clip_convert_index[np.where(clip_convert_index == edges[edge, 1])[0], 1][0]
-                    except IndexError:
-                        edges[edge, 1] = -1
-                edges = edges[np.where(edges != -1)[0], :]
+                keep_edge = np.all(in_clip[edges], axis=1)
+                edges = clip_lut[edges[keep_edge]]
                 num_of_edges = np.shape(edges)[0]
 
     # }}}
