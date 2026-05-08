@@ -16,4 +16,4 @@ jacobiasm.pc_type=getfieldvalue(options,'pc_type','asm');
 jacobiasm.sub_pc_type=getfieldvalue(options,'sub_pc_type','jacobi');
 jacobiasm.pc_asm_overlap=getfieldvalue(options,'pc_asm_overlap',3);
 jacobiasm.ksp_max_it=getfieldvalue(options,'ksp_max_it',100);
-jacobiasm.ksp_rtol=getfieldvalue(options,'ksp_rtol',1e-15);
+jacobiasm.ksp_rtol=getfieldvalue(options,'ksp_rtol',1e-8);

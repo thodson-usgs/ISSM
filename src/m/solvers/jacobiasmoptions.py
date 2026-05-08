@@ -17,7 +17,7 @@ def jacobiasmoptions(*args):
                ['sub_pc_type', 'jacobi'],
                ['pc_asm_overlap', 3],
                ['ksp_max_it', 100],
-               ['ksp_rtol', 1e-15]]
+               ['ksp_rtol', 1e-8]]
 
     #now, go through our arguments, and write over default options.
     for i in range(len(arguments.list)):

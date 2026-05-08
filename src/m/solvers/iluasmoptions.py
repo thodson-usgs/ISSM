@@ -22,6 +22,6 @@ def iluasmoptions(*args):
     iluasm['sub_pc_type'] = options.getfieldvalue('sub_pc_type', 'ilu')
     iluasm['pc_asm_overlap'] = options.getfieldvalue('pc_asm_overlap', 5)
     iluasm['ksp_max_it'] = options.getfieldvalue('ksp_max_it', 100)
-    iluasm['ksp_rtol'] = options.getfieldvalue('ksp_rtol', 1e-15)
+    iluasm['ksp_rtol'] = options.getfieldvalue('ksp_rtol', 1e-8)
 
     return iluasm
