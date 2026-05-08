@@ -52,10 +52,6 @@ def mechanicalproperties(md, vx, vy, *args):
     numberofelements = md.mesh.numberofelements
     index = md.mesh.elements
     summation = np.array([[1], [1], [1]])
-    directionsstress = np.zeros((numberofelements, 4))
-    directionsstrain = np.zeros((numberofelements, 4))
-    valuesstress = np.zeros((numberofelements, 2))
-    valuesstrain = np.zeros((numberofelements, 2))
 
     #compute nodal functions coefficients N(x, y)=alpha x + beta y + gamma
     alpha, beta = GetNodalFunctionsCoeff(index, md.mesh.x, md.mesh.y)[0:2]
@@ -103,28 +99,9 @@ def mechanicalproperties(md, vx, vy, *args):
     tau_yy = mu * vy
     tau_xy = mu * uyvx
 
-    #compute principal properties of stress
-    for i in np.arange(numberofelements):
-
-        #compute stress and strainrate matrices
-        stress = np.array([[tau_xx[i], tau_xy[i]], [tau_xy[i], tau_yy[i]]])
-        strain = np.array([[ux[i], uyvx[i]], [uyvx[i], vy[i]]])
-
-    #eigenvalues and vectors for stress
-        value, directions = np.linalg.eig(stress)
-        idx = value.argsort()[::-1]  # sort in descending algebraic (not absolute) order
-        value = value[idx]
-        directions = directions[:, idx]
-        valuesstress[i, :] = [value[0], value[1]]
-        directionsstress[i, :] = directions.transpose().flatten()
-
-    #eigenvalues and vectors for strain
-        value, directions = np.linalg.eig(strain)
-        idx = value.argsort()[::-1]  # sort in descending order
-        value = value[idx]
-        directions = directions[:, idx]
-        valuesstrain[i, :] = [value[0], value[1]]
-        directionsstrain[i, :] = directions.transpose().flatten()
+    #compute principal properties of stress and strain rate
+    valuesstress, directionsstress = _principal_directions(_symmat2(tau_xx, tau_xy, tau_yy))
+    valuesstrain, directionsstrain = _principal_directions(_symmat2(ux, uyvx, vy))
 
     #plug onto the model
     #NB: Matlab sorts the eigen value in increasing order, we want the reverse
@@ -152,3 +129,28 @@ def mechanicalproperties(md, vx, vy, *args):
     md.results.deviatoricstress = deviatoricstress
 
     return md
+
+
+def _symmat2(a, b, c):
+    """Pack symmetric 2x2 matrices [[a, b], [b, c]] into a (N, 2, 2) array."""
+    M = np.empty((len(a), 2, 2))
+    M[:, 0, 0] = a
+    M[:, 1, 1] = c
+    M[:, 0, 1] = b
+    M[:, 1, 0] = b
+    return M
+
+
+def _principal_directions(mat):
+    """Eigendecomposition of an (N, 2, 2) batch, sorted descending.
+
+    Returns eigenvalues (N, 2) and eigenvectors flattened to (N, 4) as
+    [v0_x, v0_y, v1_x, v1_y] per element.
+    """
+    val, vec = np.linalg.eig(mat)
+    val = val.real
+    vec = vec.real
+    idx = np.argsort(-val, axis=1)
+    val = np.take_along_axis(val, idx, axis=1)
+    vec = np.take_along_axis(vec, idx[:, np.newaxis, :], axis=2)
+    return val, vec.transpose(0, 2, 1).reshape(-1, 4)
