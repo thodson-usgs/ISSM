@@ -135,8 +135,9 @@ def ReadData(fid, md):  # {{{
         step = struct.unpack('i', fid.read(struct.calcsize('i')))[0]
         datatype = struct.unpack('i', fid.read(struct.calcsize('i')))[0]
         M = struct.unpack('i', fid.read(struct.calcsize('i')))[0]
+        # '=' = native byte order, matching the C++ writer's fwrite.
         if datatype == 1:
-            field = np.array(struct.unpack('{}d'.format(M), fid.read(M * struct.calcsize('d'))), dtype=float)
+            field = np.frombuffer(fid.read(M * struct.calcsize('d')), dtype='=f8').astype(float)
 
         elif datatype == 2:
             field = struct.unpack('{}s'.format(M), fid.read(M))[0][:-1]
@@ -144,17 +145,11 @@ def ReadData(fid, md):  # {{{
 
         elif datatype == 3:
             N = struct.unpack('i', fid.read(struct.calcsize('i')))[0]
-            #field = transpose(fread(fid, [N M], 'double'))
-            field = np.zeros(shape=(M, N), dtype=float)
-            for i in range(M):
-                field[i, :] = struct.unpack('{}d'.format(N), fid.read(N * struct.calcsize('d')))
+            field = np.frombuffer(fid.read(M * N * struct.calcsize('d')), dtype='=f8').reshape(M, N).copy()
 
         elif datatype == 4:
             N = struct.unpack('i', fid.read(struct.calcsize('i')))[0]
-            #field = transpose(fread(fid, [N M], 'int'))
-            field = np.zeros(shape=(M, N), dtype=int)
-            for i in range(M):
-                field[i, :] = struct.unpack('{}i'.format(N), fid.read(N * struct.calcsize('i')))
+            field = np.frombuffer(fid.read(M * N * struct.calcsize('i')), dtype='=i4').reshape(M, N).astype(int)
 
         else:
             raise TypeError('cannot read data of datatype {}'.format(datatype))
