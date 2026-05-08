@@ -359,8 +359,6 @@ ElementMatrix* MasstransportAnalysis::CreateKMatrix(Element* element){/*{{{*/
 			_error_("Element type " << EnumToStringx(element->FiniteElement()) << " not supported yet");
 	}
 
-	int domaintype;
-	element->FindParam(&domaintype,DomainTypeEnum);
 	if(basalelement->IsSpawnedElement()){basalelement->DeleteMaterials(); delete basalelement;};
 	return Ke;
 }/*}}}*/
@@ -399,7 +397,6 @@ ElementMatrix* MasstransportAnalysis::CreateKMatrixCG(Element* element){/*{{{*/
 	/*Retrieve all inputs and parameters*/
 	element->GetVerticesCoordinates(&xyz_list);
 	element->FindParam(&dt,TimesteppingTimeStepEnum);
-	element->FindParam(&domaintype,DomainTypeEnum);
 	element->FindParam(&stabilization,MasstransportStabilizationEnum);
 	Input* vxaverage_input=element->GetInput(VxAverageEnum); _assert_(vxaverage_input);
 	Input* vyaverage_input=NULL;
@@ -586,7 +583,6 @@ ElementMatrix* MasstransportAnalysis::CreateKMatrixDG(Element* element){/*{{{*/
 	if(!element->IsIceInElement()) return NULL;
 
 	/*Intermediaries */
-	int        domaintype;
 	IssmDouble Jdet,D_scalar,dt,vx,vy;
 	IssmDouble* xyz_list = NULL;
 
@@ -601,7 +597,6 @@ ElementMatrix* MasstransportAnalysis::CreateKMatrixDG(Element* element){/*{{{*/
 	/*Retrieve all inputs and parameters*/
 	element->GetVerticesCoordinates(&xyz_list);
 	element->FindParam(&dt,TimesteppingTimeStepEnum);
-	element->FindParam(&domaintype,DomainTypeEnum);
 	Input* vxaverage_input=element->GetInput(VxAverageEnum); _assert_(vxaverage_input);
 	Input* vyaverage_input=element->GetInput(VyAverageEnum); _assert_(vyaverage_input);
 
