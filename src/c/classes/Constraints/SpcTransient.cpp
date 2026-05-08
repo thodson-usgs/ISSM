@@ -114,8 +114,6 @@ void SpcTransient::ConstrainNode(Nodes* nodes,Parameters* parameters){/*{{{*/
 
 	Node       *node  = NULL;
 	IssmDouble  time  = 0.;
-	int         i;
-	IssmDouble  alpha = -1.;
 	IssmDouble  value;
 	bool        found = false;
 
@@ -137,14 +135,11 @@ void SpcTransient::ConstrainNode(Nodes* nodes,Parameters* parameters){/*{{{*/
 			found=true;
 		}
 		else{
-			for(i=0;i<nsteps-1;i++){
-				if (times[i]<=time && time<times[i+1]){
-					alpha=(time-times[i])/(times[i+1]-times[i]);
-					value=(1-alpha)*values[i]+alpha*values[i+1];
-					found=true;
-					break;
-				}
-			}
+			int offset;
+			binary_search(&offset,time,times,nsteps);
+			IssmDouble alpha = (time-times[offset])/(times[offset+1]-times[offset]);
+			value = (1-alpha)*values[offset] + alpha*values[offset+1];
+			found = true;
 		}
 
 		if(!found)_error_("could not find time segment for constraint");
@@ -163,8 +158,7 @@ void SpcTransient::PenaltyDofAndValue(int* pdof,IssmDouble* pvalue,Nodes* nodes,
 
 	Node       *node  = NULL;
 	IssmDouble  time  = 0.;
-	int         i,gdof;
-	IssmDouble  alpha = -1.;
+	int         gdof;
 	IssmDouble  value;
 	bool        found = false;
 
@@ -186,14 +180,11 @@ void SpcTransient::PenaltyDofAndValue(int* pdof,IssmDouble* pvalue,Nodes* nodes,
 			found=true;
 		}
 		else{
-			for(i=0;i<nsteps-1;i++){
-				if (times[i]<=time && time<times[i+1]){
-					alpha=(time-times[i])/(times[i+1]-times[i]);
-					value=(1-alpha)*values[i]+alpha*values[i+1];
-					found=true;
-					break;
-				}
-			}
+			int offset;
+			binary_search(&offset,time,times,nsteps);
+			IssmDouble alpha = (time-times[offset])/(times[offset+1]-times[offset]);
+			value = (1-alpha)*values[offset] + alpha*values[offset+1];
+			found = true;
 		}
 		if(!found)_error_("could not find time segment for constraint");
 
